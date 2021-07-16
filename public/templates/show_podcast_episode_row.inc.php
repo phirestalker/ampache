@@ -21,10 +21,10 @@
  */
 
 use Ampache\Config\AmpConfig;
+use Ampache\Repository\Model\Art;
 use Ampache\Repository\Model\Catalog;
 use Ampache\Repository\Model\Podcast_Episode;
 use Ampache\Repository\Model\Rating;
-use Ampache\Repository\Model\User;
 use Ampache\Repository\Model\Userflag;
 use Ampache\Module\Authorization\Access;
 use Ampache\Module\Api\Ajax;
@@ -49,6 +49,16 @@ use Ampache\Module\Util\Ui;
         } ?>
     </div>
 </td>
+<?php
+if ($browse->is_mashup()) {
+            $name = scrub_out($libitem->f_full_title); ?>
+    <td class="<?php echo $cel_cover; ?>">
+        <?php
+        $thumb = (isset($browse) && !$browse->is_grid_view()) ? 11 : 1;
+            Art::display('podcast', $libitem->podcast, $name, $thumb, AmpConfig::get('web_path') . '/albums.php?action=show&podcast=' . $libitem->podcast); ?>
+    </td>
+<?php
+        } ?>
 <td class="cel_title"><?php echo $libitem->f_link; ?></td>
 <td class="cel_add">
     <span class="cel_item_add">
@@ -68,22 +78,26 @@ use Ampache\Module\Util\Ui;
     <td class="<?php echo $cel_counter; ?> optional"><?php echo $libitem->object_cnt; ?></td>
     <?php
 } ?>
-<td class="cel_pubdate"><?php echo $libitem->f_pubdate; ?></td>
-<td class="cel_state"><?php echo $libitem->f_state; ?></td>
+<td class="cel_pubdate optional"><?php echo $libitem->f_pubdate; ?></td>
+<td class="cel_state optional"><?php echo $libitem->f_state; ?></td>
 <?php
-    if (User::is_registered()) {
-        if (AmpConfig::get('ratings')) { ?>
-    <td class="cel_rating" id="rating_<?php echo $libitem->id; ?>_podcast_episode">
-        <?php echo Rating::show($libitem->id, 'podcast_episode'); ?>
-    </td>
+    if ($show_ratings) { ?>
+        <td class="cel_ratings">
+            <?php if (AmpConfig::get('ratings')) { ?>
+                <span class="cel_rating" id="rating_<?php echo $libitem->id; ?>_podcast_episode">
+                    <?php echo Rating::show($libitem->id, 'podcast_episode'); ?>
+                </span>
+            <?php
+            } ?>
+
+            <?php if (AmpConfig::get('userflags')) { ?>
+                <span class="cel_userflag" id="userflag_<?php echo $libitem->id; ?>_podcast_episode">
+                    <?php echo Userflag::show($libitem->id, 'podcast_episode'); ?>
+                </span>
+            <?php
+            } ?>
+        </td>
     <?php
-        }
-        if (AmpConfig::get('userflags')) { ?>
-    <td class="<?php echo $cel_flag; ?>" id="userflag_<?php echo $libitem->id; ?>_podcast_episode">
-        <?php echo Userflag::show($libitem->id, 'podcast_episode'); ?>
-    </td>
-    <?php
-        }
     } ?>
 <td class="cel_action">
     <?php if (Access::check_function('download') && !empty($libitem->file)) { ?>

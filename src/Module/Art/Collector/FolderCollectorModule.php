@@ -61,7 +61,7 @@ final class FolderCollectorModule implements CollectorModuleInterface
      * results set is returned
      *
      * @param Art $art
-     * @param int $limit
+     * @param integer $limit
      * @param array $data
      *
      * @return array
@@ -107,14 +107,13 @@ final class FolderCollectorModule implements CollectorModuleInterface
             $media  = new Video($art->uid);
             $dirs[] = Core::conv_lc_file(dirname($media->file));
         } elseif ($art->type == 'artist') {
-            $media = new Artist($art->uid);
-            $media->format();
-            $preferred_filename = str_replace(array('<', '>', '\\', '/'), '_', $media->f_full_name);
+            $media              = new Artist($art->uid);
+            $preferred_filename = str_replace(array('<', '>', '\\', '/'), '_', $media->f_name);
             if ($artist_art_folder) {
                 $dirs[] = Core::conv_lc_file($artist_art_folder);
             }
             // get the folders from songs as well
-            $songs = $this->songRepository->getByArtist($media);
+            $songs = $this->songRepository->getByArtist((int) $media->id);
             foreach ($songs as $song_id) {
                 $song = new Song($song_id);
                 // look in the directory name of the files (e.g. /mnt/Music/%artistName%/%album%)

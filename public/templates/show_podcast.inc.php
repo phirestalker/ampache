@@ -47,21 +47,18 @@ Ui::show_box_top($podcast->f_title, 'info-box'); ?>
 </div>
 <?php } ?>
 <?php if (User::is_registered()) { ?>
-    <?php
-    if (AmpConfig::get('ratings')) { ?>
-    <div id="rating_<?php echo (int) ($podcast->id); ?>_podcast" style="display:inline;">
+    <?php if (AmpConfig::get('ratings')) { ?>
+    <span id="rating_<?php echo (int) ($podcast->id); ?>_podcast">
         <?php echo Rating::show($podcast->id, 'podcast'); ?>
-    </div>
-    <?php
-    } ?>
+    </span>
+    <?php } ?>
+
     <?php if (AmpConfig::get('userflags')) { ?>
-    <div style="display:table-cell;" id="userflag_<?php echo $podcast->id; ?>_podcast">
-            <?php echo Userflag::show($podcast->id, 'podcast'); ?>
-    </div>
-    <?php
-    } ?>
-<?php
-    } ?>
+    <span id="userflag_<?php echo $podcast->id; ?>_podcast">
+        <?php echo Userflag::show($podcast->id, 'podcast'); ?>
+    </span>
+    <?php } ?>
+<?php } ?>
 <div id="information_actions">
     <h3><?php echo T_('Actions'); ?>:</h3>
     <ul>
@@ -71,6 +68,12 @@ Ui::show_box_top($podcast->f_title, 'info-box'); ?>
         </li>
         <?php
     } ?>
+        <?php if (Stream_Playlist::check_autoplay_next()) { ?>
+            <li>
+                <?php echo Ajax::button_with_text('?page=stream&action=directplay&object_type=podcast&object_id=' . $podcast->id . '&playnext=true', 'play_next', T_('Play All Next'), 'addnext_podcast_' . $podcast->id); ?>
+            </li>
+            <?php
+        } ?>
         <?php if (Stream_Playlist::check_autoplay_append()) { ?>
         <li>
             <?php echo Ajax::button_with_text('?page=stream&action=directplay&object_type=podcast&object_id=' . $podcast->id . '&append=true', 'play_add', T_('Play All Last'), 'addplay_podcast_' . $podcast->id); ?>

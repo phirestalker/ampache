@@ -129,11 +129,10 @@ class Shoutbox
      */
     private static function get_sticky()
     {
-        $sql        = "SELECT * FROM `user_shout` WHERE `sticky`='1' ORDER BY `date` DESC";
+        $sql = "SELECT * FROM `user_shout` WHERE `sticky`='1' ORDER BY `date` DESC";
+
         $db_results = Dba::read($sql);
-
-        $results = array();
-
+        $results    = array();
         while ($row = Dba::fetch_assoc($db_results)) {
             $results[] = $row['id'];
         }
@@ -190,6 +189,7 @@ class Shoutbox
      * This takes a key'd array of data as input and inserts a new shoutbox entry, it returns the auto_inc id
      * @param array $data
      * @return boolean|string|null
+     * @throws \PHPMailer\PHPMailer\Exception
      */
     public static function create(array $data)
     {
@@ -202,7 +202,7 @@ class Shoutbox
         $date    = (int)($data['date'] ?: time());
         $comment = strip_tags($data['comment']);
 
-        $sql = "INSERT INTO `user_shout` (`user`, `date`, `text`, `sticky`, `object_id`, `object_type`, `data`) " . "VALUES (? , ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO `user_shout` (`user`, `date`, `text`, `sticky`, `object_id`, `object_type`, `data`) VALUES (?, ?, ?, ?, ?, ?, ?)";
         Dba::write($sql,
             array($user, $date, $comment, $sticky, $data['object_id'], $data['object_type'], $data['data']));
 

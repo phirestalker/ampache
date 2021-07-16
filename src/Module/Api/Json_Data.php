@@ -398,15 +398,15 @@ class Json_Data
 
             // Handle includes
             $albums = (in_array("albums", $include))
-                ? self::albums(static::getAlbumRepository()->getByArtist($artist), array(), $user_id, false)
+                ? self::albums(static::getAlbumRepository()->getByArtist($artist_id), array(), $user_id, false)
                 : array();
             $songs = (in_array("songs", $include))
-                ? self::songs(static::getSongRepository()->getByArtist($artist), $user_id, false)
+                ? self::songs(static::getSongRepository()->getByArtist($artist_id), $user_id, false)
                 : array();
 
             array_push($JSON, array(
                 "id" => (string)$artist->id,
-                "name" => $artist->f_full_name,
+                "name" => $artist->f_name,
                 "albums" => $albums,
                 "albumcount" => (int) $artist->albums,
                 "songs" => $songs,
@@ -451,6 +451,8 @@ class Json_Data
         if ((count($albums) > self::$limit || self::$offset > 0) && (self::$limit && $encode)) {
             $albums = array_splice($albums, self::$offset, self::$limit);
         }
+        // original year (fall back to regular year)
+        $original_year = AmpConfig::get('use_original_year');
 
         Rating::build_cache('album', $albums);
 
@@ -462,6 +464,9 @@ class Json_Data
             $disk   = $album->disk;
             $rating = new Rating($album_id, 'album');
             $flag   = new Userflag($album_id, 'album');
+            $year   = ($original_year && $album->original_year)
+                ? $album->original_year
+                : $album->year;
 
             // Build the Art URL, include session
             $art_url = AmpConfig::get('web_path') . '/image.php?object_id=' . $album->id . '&object_type=album&auth=' . scrub_out($_REQUEST['auth']);
@@ -469,13 +474,13 @@ class Json_Data
             $theArray = [];
 
             $theArray["id"]   = (string)$album->id;
-            $theArray["name"] = $album->full_name;
+            $theArray["name"] = $album->f_name;
 
             // Do a little check for artist stuff
-            if ($album->album_artist_name != "") {
+            if ($album->f_album_artist_name != "") {
                 $theArray['artist'] = array(
-                    "id" => (string)$album->artist_id,
-                    "name" => $album->album_artist_name
+                    "id" => (string)$album->album_artist,
+                    "name" => $album->f_album_artist_name
                 );
             } elseif ($album->artist_count != 1) {
                 $theArray['artist'] = array(
@@ -484,8 +489,8 @@ class Json_Data
                 );
             } else {
                 $theArray['artist'] = array(
-                    "id" => (string)$album->artist_id,
-                    "name" => $album->artist_name
+                    "id" => (string)$album->album_artist,
+                    "name" => $album->f_artist_name
                 );
             }
 
@@ -500,7 +505,7 @@ class Json_Data
             }
 
             $theArray['time']          = (int) $album->total_duration;
-            $theArray['year']          = (int) $album->year;
+            $theArray['year']          = (int) $year;
             $theArray['tracks']        = $songs;
             $theArray['songcount']     = (int) $album->song_count;
             $theArray['diskcount']     = (int) $disk;

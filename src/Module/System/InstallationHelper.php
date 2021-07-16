@@ -278,7 +278,7 @@ final class InstallationHelper implements InstallationHelperInterface
             if ($db_host == 'localhost' || strpos($db_host, '/') === 0) {
                 $sql_grant .= "@'localhost'";
             }
-            $sql_grant .= "  WITH GRANT OPTION";
+            $sql_grant .= " WITH GRANT OPTION";
 
             if (!Dba::write($sql_grant)) {
                 AmpError::add('general', sprintf(
@@ -556,10 +556,16 @@ final class InstallationHelper implements InstallationHelperInterface
                 $dbconfig['download']    = '0';
                 $dbconfig['allow_video'] = '0';
 
+                $cookie_options = [
+                    'expires' => time() + (30 * 24 * 60 * 60),
+                    'path' => '/',
+                    'samesite' => 'Strict'
+                ];
+
                 // Default local UI preferences to have a better 'minimalist first look'.
-                setcookie('sidebar_state', 'collapsed', time() + (30 * 24 * 60 * 60), '/');
-                setcookie('browse_album_grid_view', 'false', time() + (30 * 24 * 60 * 60), '/');
-                setcookie('browse_artist_grid_view', 'false', time() + (30 * 24 * 60 * 60), '/');
+                setcookie('sidebar_state', 'collapsed', $cookie_options);
+                setcookie('browse_album_grid_view', 'false', $cookie_options);
+                setcookie('browse_artist_grid_view', 'false', $cookie_options);
                 break;
             case 'community':
                 $trconfig['use_auth']                                = 'false';
@@ -623,7 +629,7 @@ final class InstallationHelper implements InstallationHelperInterface
 
     /**
      * Write new configuration into the current configuration file by keeping old values.
-     * @param $current_file_path
+     * @param string $current_file_path
      * @throws Exception
      */
     public function write_config(string $current_file_path): void

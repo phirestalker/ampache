@@ -43,21 +43,21 @@ Ui::show_box_top($season->f_name . ' - ' . $season->f_tvshow_link, 'info-box'); 
     Art::display('tvshow_season', $season->id, $season->f_name, 6); ?>
 </div>
 <?php if (User::is_registered()) { ?>
-    <?php
-    if (AmpConfig::get('ratings')) { ?>
-    <div id="rating_<?php echo (int) ($season->id); ?>_tvshow_season" style="display:inline;">
+    <?php if (AmpConfig::get('ratings')) { ?>
+    <span id="rating_<?php echo (int) ($season->id); ?>_tvshow_season">
         <?php echo Rating::show($season->id, 'tvshow_season'); ?>
-    </div>
+    </span>
     <?php
     } ?>
+
     <?php if (AmpConfig::get('userflags')) { ?>
-    <div style="display:table-cell;" id="userflag_<?php echo $season->id; ?>_tvshow_season">
-            <?php echo Userflag::show($season->id, 'tvshow_season'); ?>
-    </div>
+    <span id="userflag_<?php echo $season->id; ?>_tvshow_season">
+        <?php echo Userflag::show($season->id, 'tvshow_season'); ?>
+    </span>
     <?php
     } ?>
 <?php
-    } ?>
+} ?>
 <div id="information_actions">
     <h3><?php echo T_('Actions'); ?>:</h3>
     <ul>
@@ -67,6 +67,12 @@ Ui::show_box_top($season->f_name . ' - ' . $season->f_tvshow_link, 'info-box'); 
         </li>
         <?php
     } ?>
+        <?php if (Stream_Playlist::check_autoplay_next()) { ?>
+            <li>
+                <?php echo Ajax::button_with_text('?page=stream&action=directplay&object_type=season&object_id=' . $season->id . '&playnext=true', 'play_next', T_('Play All Next'), 'nextplay_season_' . $season->id); ?>
+            </li>
+            <?php
+        } ?>
         <?php if (Stream_Playlist::check_autoplay_append()) { ?>
         <li>
             <?php echo Ajax::button_with_text('?page=stream&action=directplay&object_type=season&object_id=' . $season->id . '&append=true', 'play_add', T_('Play All Last'), 'addplay_season_' . $season->id); ?>

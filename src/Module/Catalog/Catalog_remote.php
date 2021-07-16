@@ -102,14 +102,14 @@ class Catalog_remote extends Catalog
         $charset   = (AmpConfig::get('database_charset', 'utf8mb4'));
         $engine    = ($charset == 'utf8mb4') ? 'InnoDB' : 'MYISAM';
 
-        $sql = "CREATE TABLE `catalog_remote` (`id` INT( 11 ) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY , " . "`uri` VARCHAR( 255 ) COLLATE $collation NOT NULL , " . "`username` VARCHAR( 255 ) COLLATE $collation NOT NULL , " . "`password` VARCHAR( 255 ) COLLATE $collation NOT NULL , " . "`catalog_id` INT( 11 ) NOT NULL" . ") ENGINE = $engine DEFAULT CHARSET=$charset COLLATE=$collation";
+        $sql = "CREATE TABLE `catalog_remote` (`id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, `uri` VARCHAR(255) COLLATE $collation NOT NULL, `username` VARCHAR(255) COLLATE $collation NOT NULL, `password` VARCHAR(255) COLLATE $collation NOT NULL, `catalog_id` INT(11) NOT NULL) ENGINE = $engine DEFAULT CHARSET=$charset COLLATE=$collation";
         Dba::query($sql);
 
         return true;
     } // install
 
     /**
-     * @return array|mixed
+     * @return array
      */
     public function catalog_fields()
     {
@@ -313,7 +313,7 @@ class Catalog_remote extends Catalog
     }
 
     /**
-     * @return array|mixed
+     * @return array
      */
     public function verify_catalog_proc()
     {
@@ -331,7 +331,7 @@ class Catalog_remote extends Catalog
         if (!$remote_handle) {
             debug_event('remote.catalog', 'Remote login failed', 1, 'ampache-catalog');
 
-            return false;
+            return 0;
         }
 
         $dead = 0;
@@ -418,7 +418,7 @@ class Catalog_remote extends Catalog
 
     /**
      * @param Podcast_Episode|Song|Song_Preview|Video $media
-     * @return boolean|Media|null
+     * @return boolean|null
      * @throws Exception
      */
     public function prepare_media($media)

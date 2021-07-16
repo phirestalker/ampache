@@ -54,11 +54,8 @@ if (!isset($video_type)) {
         } ?>
     </div>
 </td>
-<?php
-if (Art::is_enabled()) { ?>
 <td class="<?php echo $cel_cover; ?>">
-    <?php
-    $art_showed = false;
+    <?php $art_showed = false;
         if ($libitem->get_default_art_kind() == 'preview') {
             $art_showed = Art::display('video', $libitem->id, $libitem->f_title, 9, $libitem->link, false, 'preview');
         }
@@ -67,8 +64,6 @@ if (Art::is_enabled()) { ?>
             Art::display('video', $libitem->id, $libitem->f_title, $thumb, $libitem->link);
         } ?>
 </td>
-<?php
-    } ?>
 <td class="cel_title"><?php echo $libitem->f_link; ?></td>
 <td class="cel_add">
     <span class="cel_item_add">
@@ -96,15 +91,23 @@ if ($video_type != 'video') {
 } ?>
 <td class="<?php echo $cel_tags; ?>"><?php echo $libitem->f_tags; ?></td>
 <?php
-    if (User::is_registered()) {
-        if (AmpConfig::get('ratings')) { ?>
-    <td class="cel_rating" id="rating_<?php echo $libitem->id ?>_video"><?php echo Rating::show($libitem->id, 'video') ?></td>
+    if ($show_ratings) { ?>
+        <td class="cel_ratings">
+            <?php if (AmpConfig::get('ratings')) { ?>
+                <span class="cel_rating" id="rating_<?php echo $libitem->id ?>_video">
+                    <?php echo Rating::show($libitem->id, 'video') ?>
+                </span>
+            <?php
+            } ?>
+
+            <?php if (AmpConfig::get('userflags')) { ?>
+                <span class="cel_userflag" id="userflag_<?php echo $libitem->id ?>_video">
+                    <?php echo Userflag::show($libitem->id, 'video') ?>
+                </span>
+            <?php
+            } ?>
+        </td>
     <?php
-        }
-        if (AmpConfig::get('userflags')) { ?>
-    <td class="<?php echo $cel_flag; ?>" id="userflag_<?php echo $libitem->id ?>_video"><?php echo Userflag::show($libitem->id, 'video') ?></td>
-    <?php
-        }
     } ?>
 <td class="cel_action">
 <a href="<?php echo $libitem->link; ?>"><?php echo Ui::get_icon('preferences', T_('Video Information')); ?></a>

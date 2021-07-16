@@ -207,13 +207,29 @@ class Browse extends Query
 
         // Set the correct classes based on type
         $class = "box browse_" . $type;
-
-        $argument_param = ($argument ? '&argument=' . scrub_in((string)$argument) : '');
-
         debug_event(self::class, 'Show objects called for type {' . $type . '}', 5);
 
-        $limit_threshold = $this->get_threshold();
+        // hide some of the useless columns in a browse
+        $hide_columns   = array();
+        $argument_param = '';
+        if (is_array($argument)) {
+            if (is_array($argument['hide'])) {
+                $hide_columns = $argument['hide'];
+            }
+            if (!empty($hide_columns)) {
+                $argument_param = '&hide=';
+                foreach ($hide_columns as $column) {
+                    $argument_param .= scrub_in((string)$column) . ',';
+                }
+                $argument_param = rtrim($argument_param, ',');
+            }
+        } else {
+            $argument_param = ($argument)
+                ? '&argument=' . scrub_in((string)$argument)
+                : '';
+        }
 
+        $limit_threshold = $this->get_threshold();
         // Switch on the type of browsing we're doing
         switch ($type) {
             case 'song':
@@ -445,7 +461,7 @@ class Browse extends Query
     public function save_cookie_params($option, $value)
     {
         if ($this->get_type()) {
-            setcookie('browse_' . $this->get_type() . '_' . $option, $value, time() + 31536000, "/");
+            setcookie('browse_' . $this->get_type() . '_' . $option, $value, ['expires' => time() + 31536000, 'path' => "/", 'samesite' => 'Strict']);
         }
     }
 
@@ -469,6 +485,24 @@ class Browse extends Query
     public function is_use_pages()
     {
         return make_bool($this->_state['use_pages']);
+    }
+
+    /**
+     *
+     * @param boolean $mashup
+     */
+    public function set_mashup($mashup)
+    {
+        $this->_state['mashup'] = $mashup;
+    }
+
+    /**
+     *
+     * @return boolean
+     */
+    public function is_mashup()
+    {
+        return make_bool($this->_state['mashup']);
     }
 
     /**

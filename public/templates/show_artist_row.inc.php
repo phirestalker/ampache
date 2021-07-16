@@ -25,7 +25,6 @@ use Ampache\Repository\Model\Art;
 use Ampache\Repository\Model\Artist;
 use Ampache\Repository\Model\Catalog;
 use Ampache\Repository\Model\Rating;
-use Ampache\Repository\Model\User;
 use Ampache\Repository\Model\Userflag;
 use Ampache\Module\Authorization\Access;
 use Ampache\Module\Api\Ajax;
@@ -37,7 +36,7 @@ use Ampache\Module\Util\Ui;
 // @deprecated
 global $dic;
 $gatekeeper = $dic->get(GatekeeperFactoryInterface::class)->createGuiGatekeeper();
-?>
+$web_path   = AmpConfig::get('web_path'); ?>
 <td class="cel_play">
     <span class="cel_play_content">&nbsp;</span>
     <div class="cel_play_hover">
@@ -53,16 +52,11 @@ $gatekeeper = $dic->get(GatekeeperFactoryInterface::class)->createGuiGatekeeper(
         } ?>
     </div>
 </td>
-<?php
-if (Art::is_enabled()) {
-            $name = scrub_out($libitem->full_name); ?>
+<?php $name = scrub_out($libitem->f_name); ?>
 <td class="<?php echo $cel_cover; ?>">
-    <?php
-    $thumb = (isset($browse) && !$browse->is_grid_view()) ? 11 : 1;
-            Art::display('artist', $libitem->id, $name, $thumb, AmpConfig::get('web_path') . '/artists.php?action=show&artist=' . $libitem->id); ?>
+    <?php $thumb = (isset($browse) && !$browse->is_grid_view()) ? 11 : 1;
+    Art::display('artist', $libitem->id, $name, $thumb, $web_path . '/artists.php?action=show&artist=' . $libitem->id); ?>
 </td>
-<?php
-        } ?>
 <td class="<?php echo $cel_artist; ?>"><?php echo $libitem->f_link; ?></td>
 <td class="cel_add">
     <span class="cel_item_add">
@@ -86,20 +80,28 @@ if (Art::is_enabled()) {
         } ?>
 <td class="<?php echo $cel_tags; ?>"><?php echo $libitem->f_tags; ?></td>
 <?php
-    if (User::is_registered()) {
-        if (AmpConfig::get('ratings')) { ?>
-            <td class="cel_rating" id="rating_<?php echo $libitem->id; ?>_artist"><?php echo Rating::show($libitem->id, 'artist'); ?></td>
-        <?php
-        }
-        if (AmpConfig::get('userflags')) { ?>
-            <td class="<?php echo $cel_flag; ?>" id="userflag_<?php echo $libitem->id; ?>_artist"><?php echo Userflag::show($libitem->id, 'artist'); ?></td>
-        <?php
-        }
+    if ($show_ratings) { ?>
+        <td class="cel_ratings">
+            <?php if (AmpConfig::get('ratings')) { ?>
+                <span class="cel_rating" id="rating_<?php echo $libitem->id; ?>_artist">
+                    <?php echo Rating::show($libitem->id, 'artist'); ?>
+                </span>
+            <?php
+            } ?>
+
+            <?php if (AmpConfig::get('userflags')) { ?>
+                <span class="cel_userflag" id="userflag_<?php echo $libitem->id; ?>_artist">
+                    <?php echo Userflag::show($libitem->id, 'artist'); ?>
+                </span>
+            <?php
+            } ?>
+        </td>
+    <?php
     } ?>
 <td class="cel_action">
 <?php if (!AmpConfig::get('use_auth') || Access::check('interface', 25)) {
         if (AmpConfig::get('sociable') && (!$libitem->allow_group_disks || ($libitem->allow_group_disks && count($libitem->album_suite) <= 1))) { ?>
-    <a href="<?php echo AmpConfig::get('web_path'); ?>/shout.php?action=show_add_shout&type=artist&amp;id=<?php echo $libitem->id; ?>">
+    <a href="<?php echo $web_path; ?>/shout.php?action=show_add_shout&type=artist&amp;id=<?php echo $libitem->id; ?>">
         <?php echo Ui::get_icon('comment', T_('Post Shout')); ?>
     </a>
     <?php
@@ -111,7 +113,7 @@ if (Art::is_enabled()) {
     <?php
     }
         if (Catalog::can_remove($libitem)) { ?>
-        <a id="<?php echo 'delete_artist_' . $libitem->id ?>" href="<?php echo AmpConfig::get('web_path'); ?>/artists.php?action=delete&artist_id=<?php echo $libitem->id; ?>">
+        <a id="<?php echo 'delete_artist_' . $libitem->id ?>" href="<?php echo $web_path; ?>/artists.php?action=delete&artist_id=<?php echo $libitem->id; ?>">
             <?php echo Ui::get_icon('delete', T_('Delete')); ?>
         </a>
     <?php

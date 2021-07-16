@@ -24,6 +24,7 @@ use Ampache\Config\AmpConfig;
 use Ampache\Repository\Model\Album;
 use Ampache\Repository\Model\Art;
 use Ampache\Repository\Model\Rating;
+use Ampache\Repository\Model\Userflag;
 use Ampache\Module\Authorization\Access;
 use Ampache\Module\Api\Ajax;
 use Ampache\Module\Playback\Stream_Playlist;
@@ -40,29 +41,25 @@ if ($albums) {
         $show_play = true; ?>
     <div class="random_album">
         <div id="album_<?php echo $album_id ?>" class="art_album libitem_menu">
-            <?php
-            if (Art::is_enabled()) {
-                $thumb = 1;
-                if (!Ui::is_grid_view('album')) {
-                    $thumb     = 11;
-                    $show_play = false;
-                }
-                $album->display_art($thumb, true);
-            } else { ?>
-            <a href="<?php echo $album->link; ?>">
-                <?php echo '[' . $album->f_artist . '] ' . $album->f_name; ?>
-            </a>
-            <?php
-            } ?>
+            <?php $thumb = 1;
+        if (!Ui::is_grid_view('album')) {
+            $thumb     = 11;
+            $show_play = false;
+        }
+        $album->display_art($thumb, true); ?>
         </div>
         <?php if ($show_play) { ?>
         <div class="play_album">
         <?php if (AmpConfig::get('directplay')) { ?>
             <?php echo Ajax::button('?page=stream&action=directplay&object_type=album&' . $album->get_http_album_query_ids('object_id'), 'play', T_('Play'), 'play_album_' . $album->id); ?>
+            <?php if (Stream_Playlist::check_autoplay_next()) { ?>
+                <?php echo Ajax::button('?page=stream&action=directplay&object_type=album&' . $album->get_http_album_query_ids('object_id') . '&playnext=true', 'play_next', T_('Play next'), 'nextplay_album_' . $album->id); ?>
+                <?php
+            } ?>
             <?php if (Stream_Playlist::check_autoplay_append()) { ?>
                 <?php echo Ajax::button('?page=stream&action=directplay&object_type=album&' . $album->get_http_album_query_ids('object_id') . '&append=true', 'play_add', T_('Play last'), 'addplay_album_' . $album->id); ?>
             <?php
-                    } ?>
+            } ?>
         <?php
                 } ?>
         <?php echo Ajax::button('?action=basket&type=album_full&' . $album->get_http_album_query_ids('id'), 'add', T_('Add to Temporary Playlist'), 'play_full_' . $album->id); ?>
@@ -70,11 +67,15 @@ if ($albums) {
         <?php
             } ?>
         <?php
-        if (AmpConfig::get('ratings') && Access::check('interface', 25)) {
-            echo "<div id=\"rating_" . $album->id . "_album\">";
-            echo Rating::show($album->id, 'album');
-            echo "</div>";
-        } ?>
+        if (Access::check('interface', 25)) { ?>
+            <?php if (AmpConfig::get('ratings')) { ?>
+                <span class="cel_rating" id="rating_<?php echo $album->id; ?>_album"><?php echo Rating::show($album->id, 'album'); ?></span>
+            <?php } ?>
+
+            <?php if (AmpConfig::get('userflags')) { ?>
+                <span class="cel_rating" id="userflag_<?php echo $album->id; ?>_album"><?php echo Userflag::show($album->id, 'album'); ?></span>
+            <?php } ?>
+        <?php } ?>
     </div>
     <?php
     } ?>

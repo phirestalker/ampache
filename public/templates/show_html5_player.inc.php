@@ -11,8 +11,8 @@ use Ampache\Module\Util\Ui;
 // TODO remove me
 global $dic;
 $environment = $dic->get(EnvironmentInterface::class);
-
-$autoplay = true;
+$web_path    = AmpConfig::get('web_path');
+$autoplay    = true;
 if ($is_share) {
     $autoplay = ($_REQUEST['autoplay'] === 'true');
 }
@@ -45,13 +45,13 @@ var currentAudioElement = undefined;
 
     $(document).ready(function(){
 
-        if (!isNaN($.cookie('jp_volume'))) {
-            var jp_volume = $.cookie('jp_volume');
+        if (!isNaN(Cookies.get('jp_volume'))) {
+            var jp_volume = Cookies.get('jp_volume');
         } else {
             var jp_volume = 0.80;
         }
 
-        var replaygainPersist = $.cookie('replaygain');
+        var replaygainPersist = Cookies.get('replaygain');
 
         jplaylist = new jPlayerPlaylist({
             jPlayer: "#jquery_jplayer_1",
@@ -67,7 +67,7 @@ var currentAudioElement = undefined;
                 removeTime: 'fast',
                 shuffleTime: 'slow'
             },
-            swfPath: "<?php echo AmpConfig::get('web_path'); ?>/lib/vendor/happyworm/jplayer/dist/jplayer",
+            swfPath: "<?php echo $web_path; ?>/lib/vendor/happyworm/jplayer/dist/jplayer",
             preload: 'auto',
             audioFullScreen: true,
             smoothPlayBar: true,
@@ -171,12 +171,12 @@ if (!$isVideo && !$isRadio && !$is_share) {
                 echo "ajaxPut(jsAjaxUrl + '?page=song&action=shouts&object_type=song&object_id=' + currenti.attr('data-media_id'), 'shouts_data');";
             }
             echo "ajaxPut(jsAjaxUrl + '?action=action_buttons&object_type=song&object_id=' + currenti.attr('data-media_id'));";
-            echo "var titleobj = '<a href=\"javascript:NavigateTo(\'" . AmpConfig::get('web_path') . "/song.php?action=show_song&song_id=' + currenti.attr('data-media_id') + '\');\" title=\"' + obj.title + '\">' + obj.title + '</a>';";
-            echo "var artistobj = (currenti.attr('data-artist_id') !== 'undefined') ? '<a href=\"javascript:NavigateTo(\'" . AmpConfig::get('web_path') . "/artists.php?action=show&artist=' + currenti.attr('data-artist_id') + '\');\" title=\"' + obj.artist + '\">' + obj.artist + '</a>' : obj.artist;";
-            echo "var lyricsobj = '<a href=\"javascript:NavigateTo(\'" . AmpConfig::get('web_path') . "/song.php?action=show_lyrics&song_id=' + currenti.attr('data-media_id') + '\');\">" . T_('Show Lyrics') . "</a>';";
-            echo "var actionsobj = (currenti.attr('data-album_id') !== 'undefined') ? '<a href=\"javascript:NavigateTo(\'" . AmpConfig::get('web_path') . "/albums.php?action=show&album=' + currenti.attr('data-album_id') + '\');\" title=\"" . T_('Show Album') . "\">" . Ui::get_icon('album', T_('Show Album')) . "</a> |' : '';";
+            echo "var titleobj = '<a href=\"javascript:NavigateTo(\'" . $web_path . "/song.php?action=show_song&song_id=' + currenti.attr('data-media_id') + '\');\" title=\"' + obj.title + '\">' + obj.title + '</a>';";
+            echo "var artistobj = (currenti.attr('data-artist_id') !== 'undefined') ? '<a href=\"javascript:NavigateTo(\'" . $web_path . "/artists.php?action=show&artist=' + currenti.attr('data-artist_id') + '\');\" title=\"' + obj.artist + '\">' + obj.artist + '</a>' : obj.artist;";
+            echo "var lyricsobj = '<a href=\"javascript:NavigateTo(\'" . $web_path . "/song.php?action=show_lyrics&song_id=' + currenti.attr('data-media_id') + '\');\">" . T_('Show Lyrics') . "</a>';";
+            echo "var actionsobj = (currenti.attr('data-album_id') !== 'undefined') ? '<a href=\"javascript:NavigateTo(\'" . $web_path . "/albums.php?action=show&album=' + currenti.attr('data-album_id') + '\');\" title=\"" . T_('Show Album') . "\">" . Ui::get_icon('album', T_('Show Album')) . "</a> |' : '';";
             if (AmpConfig::get('sociable') && (!AmpConfig::get('use_auth') || Access::check('interface', 25))) {
-                echo "actionsobj += ' <a href=\"javascript:NavigateTo(\'" . AmpConfig::get('web_path') . "/shout.php?action=show_add_shout&type=song&id=' + currenti.attr('data-media_id') + '\');\">" . Ui::get_icon('comment', T_('Post Shout')) . "</a> |';";
+                echo "actionsobj += ' <a href=\"javascript:NavigateTo(\'" . $web_path . "/shout.php?action=show_add_shout&type=song&id=' + currenti.attr('data-media_id') + '\');\">" . Ui::get_icon('comment', T_('Post Shout')) . "</a> |';";
             }
             echo "actionsobj += '<div id=\'action_buttons\'></div>';";
             if (AmpConfig::get('waveform') && !$is_share) {
@@ -185,7 +185,7 @@ if (!$isVideo && !$isRadio && !$is_share) {
                     echo "waveformobj += '<a href=\"#\" title=\"" . T_('Double click to post a new shout') . "\" onClick=\"javascript:WaveformClick(' + currenti.attr('data-media_id') + ', ClickTimeOffset(event));\">';";
                 }
                 echo "waveformobj += '<div class=\"waveform-shouts\"></div>';";
-                echo "waveformobj += '<div class=\"waveform-time\"></div><img src=\"" . AmpConfig::get('web_path') . "/waveform.php?song_id=' + currenti.attr('data-media_id') + '\" onLoad=\"ShowWaveform();\">';";
+                echo "waveformobj += '<div class=\"waveform-time\"></div><img src=\"" . $web_path . "/waveform.php?song_id=' + currenti.attr('data-media_id') + '\" onLoad=\"ShowWaveform();\">';";
                 if (AmpConfig::get('waveform')) {
                     echo "waveformobj += '</a>';";
                 }
@@ -258,7 +258,7 @@ if (AmpConfig::get('song_page_title') && !$is_share) {
     });
 
     $("#jquery_jplayer_1").bind($.jPlayer.event.volumechange, function(event) {
-        $.cookie('jp_volume', event.jPlayer.options.volume, { expires: 7, path: '/; samesite=strict'});
+        Cookies.set('jp_volume', event.jPlayer.options.volume, { expires: 7, path: '/', samesite: 'Strict'});
     });
 
     $("#jquery_jplayer_1").bind($.jPlayer.event.resize, function (event) {
@@ -330,7 +330,7 @@ if (AmpConfig::get('webplayer_aurora')) {
     foreach ($atypes as $atype) {
         $spath = '/modules/aurora.js/' . $atype . '.js';
         if (Core::is_readable(__DIR__ . '/../lib/components' . $spath)) {
-            echo '<script src="' . AmpConfig::get('web_path') . $spath . '" defer></script>' . "\n";
+            echo '<script src="' . $web_path . $spath . '" defer></script>' . "\n";
         }
     }
 }

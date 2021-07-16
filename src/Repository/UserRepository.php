@@ -53,15 +53,14 @@ final class UserRepository implements UserRepositoryInterface
             [$username]
         );
 
-        $data = Dba::fetch_assoc($db_results);
-
+        $data   = Dba::fetch_assoc($db_results);
         $result = $data['id'] ?? null;
 
         if ($result !== null) {
             return (int) $result;
         }
 
-        return $result;
+        return null;
     }
 
     /**
@@ -82,6 +81,42 @@ final class UserRepository implements UserRepositoryInterface
         }
 
         return $users;
+    }
+
+    /**
+     * This returns all valid users in an array (id => name).
+     *
+     * @param bool $includeDisabled
+     * @return array
+     */
+    public function getValidArray(bool $includeDisabled = false): array
+    {
+        $users = array();
+        $sql   = ($includeDisabled)
+            ? 'SELECT `id`, `username` FROM `user`'
+            : 'SELECT `id`, `username` FROM `user` WHERE `disabled` = \'0\'';
+
+        $db_results = Dba::read($sql);
+        while ($results = Dba::fetch_assoc($db_results)) {
+            $users[(int) $results['id']] = $results['username'];
+        }
+
+        return $users;
+    }
+
+    /**
+     * This returns username for an id (or an empty string)
+     */
+    public function getUsernameById(int $user_id): string
+    {
+        $db_results = Dba::read(
+            'SELECT `username` FROM `user` WHERE `id`= ?',
+            [$user_id]
+        );
+
+        $data = Dba::fetch_assoc($db_results);
+
+        return (string)$data['username'];
     }
 
     /**

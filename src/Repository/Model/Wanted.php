@@ -33,6 +33,7 @@ use Ampache\Repository\WantedRepositoryInterface;
 use Exception;
 use MusicBrainz\MusicBrainz;
 use MusicBrainz\HttpAdapters\RequestsHttpAdapter;
+use PDOStatement;
 
 class Wanted extends database_object
 {
@@ -146,7 +147,7 @@ class Wanted extends database_object
         $owngroups = array();
         $wartist   = array();
         if ($artist) {
-            $albums = static::getAlbumRepository()->getByArtist($artist);
+            $albums = static::getAlbumRepository()->getByArtist($artist->id);
             foreach ($albums as $albumid) {
                 $album = new Album($albumid);
                 if (trim((string)$album->mbid_group)) {
@@ -450,6 +451,25 @@ class Wanted extends database_object
         $user         = new User($this->user);
         $user->format();
         $this->f_user = $user->f_name;
+    }
+
+    /**
+     * Migrate an object associate stats to a new object
+     * @param string $object_type
+     * @param integer $old_object_id
+     * @param integer $new_object_id
+     * @return PDOStatement|boolean
+     */
+    public static function migrate($object_type, $old_object_id, $new_object_id)
+    {
+        if ($object_type == 'artist') {
+            $sql    = "UPDATE `wanted` SET `artist` = ? WHERE `artist` = ?";
+            $params = array($new_object_id, $old_object_id);
+
+            return Dba::write($sql, $params);
+        }
+
+        return false;
     }
 
     private static function getAlbumRepository(): AlbumRepositoryInterface

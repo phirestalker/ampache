@@ -51,15 +51,15 @@ Ui::show_box_top($tvshow->f_name, 'info-box'); ?>
 <?php if (User::is_registered()) { ?>
     <?php
     if (AmpConfig::get('ratings')) { ?>
-    <div id="rating_<?php echo (int) ($tvshow->id); ?>_tvshow" style="display:inline;">
+    <span id="rating_<?php echo (int) ($tvshow->id); ?>_tvshow">
         <?php echo Rating::show($tvshow->id, 'tvshow'); ?>
-    </div>
+    </span>
     <?php
     } ?>
     <?php if (AmpConfig::get('userflags')) { ?>
-    <div style="display:table-cell;" id="userflag_<?php echo $tvshow->id; ?>_tvshow">
-            <?php echo Userflag::show($tvshow->id, 'tvshow'); ?>
-    </div>
+    <span id="userflag_<?php echo $tvshow->id; ?>_tvshow">
+        <?php echo Userflag::show($tvshow->id, 'tvshow'); ?>
+    </span>
     <?php
     } ?>
 <?php
@@ -70,6 +70,12 @@ Ui::show_box_top($tvshow->f_name, 'info-box'); ?>
         <?php if (AmpConfig::get('directplay')) { ?>
         <li>
             <?php echo Ajax::button_with_text('?page=stream&action=directplay&object_type=tvshow&object_id=' . $tvshow->id, 'play', T_('Play All'), 'directplay_full_' . $tvshow->id); ?>
+        </li>
+        <?php
+    } ?>
+        <?php if (Stream_Playlist::check_autoplay_next()) { ?>
+        <li>
+            <?php echo Ajax::button_with_text('?page=stream&action=directplay&object_type=tvshow&object_id=' . $tvshow->id . '&playnext=true', 'play_next', T_('Play All Next'), 'nextplay_tvshow_' . $tvshow->id); ?>
         </li>
         <?php
     } ?>

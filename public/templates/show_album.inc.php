@@ -42,14 +42,13 @@ use Ampache\Repository\AlbumRepositoryInterface;
 $web_path = AmpConfig::get('web_path');
 
 /** @var Album $album */
-/** @var AlbumRepositoryInterface $albumRepository */
 
 // Title for this album
-$title = scrub_out($album->full_name);
+$title = scrub_out($album->f_name);
 if ($album->year > 0) {
     $title .= '&nbsp;(' . $album->year . ')';
 }
-if ($album->disk && !AmpConfig::get('album_group') && count($albumRepository->getAlbumSuite($album)) > 1) {
+if ($album->disk && !AmpConfig::get('album_group') && count($album->album_suite) > 1) {
     $title .= "<span class=\"discnb disc" . $album->disk . "\">, " . T_('Disk') . " " . $album->disk . "</span>";
 }
 $title .= '&nbsp;-&nbsp;' . (($album->f_album_artist_link) ? $album->f_album_artist_link : $album->f_artist_link);
@@ -57,6 +56,9 @@ $title .= '&nbsp;-&nbsp;' . (($album->f_album_artist_link) ? $album->f_album_art
 $show_direct_play  = AmpConfig::get('directplay');
 $show_playlist_add = Access::check('interface', 25);
 $directplay_limit  = AmpConfig::get('direct_play_limit');
+$hide_array        = (AmpConfig::get('hide_single_artist') && $album->artist_count == 1)
+    ? array('cel_artist', 'cel_album', 'cel_year', 'cel_drag')
+    : array('cel_album', 'cel_year', 'cel_drag');
 
 if ($directplay_limit > 0) {
     $show_playlist_add = ($album->song_count <= $directplay_limit);
@@ -68,10 +70,10 @@ if ($directplay_limit > 0) {
 
 <div class="item_right_info">
     <div class="external_links">
-        <a href="http://www.google.com/search?q=%22<?php echo rawurlencode($album->f_artist); ?>%22+%22<?php echo rawurlencode($album->f_name); ?>%22" target="_blank"><?php echo Ui::get_icon('google', T_('Search on Google ...')); ?></a>
-        <a href="https://www.duckduckgo.com/?q=%22<?php echo rawurlencode($album->f_artist); ?>%22+%22<?php echo rawurlencode($album->f_name); ?>%22" target="_blank"><?php echo Ui::get_icon('duckduckgo', T_('Search on DuckDuckGo ...')); ?></a>
+        <a href="http://www.google.com/search?q=%22<?php echo rawurlencode($album->f_album_artist_name); ?>%22+%22<?php echo rawurlencode($album->f_name); ?>%22" target="_blank"><?php echo Ui::get_icon('google', T_('Search on Google ...')); ?></a>
+        <a href="https://www.duckduckgo.com/?q=%22<?php echo rawurlencode($album->f_album_artist_name); ?>%22+%22<?php echo rawurlencode($album->f_name); ?>%22" target="_blank"><?php echo Ui::get_icon('duckduckgo', T_('Search on DuckDuckGo ...')); ?></a>
         <a href="http://en.wikipedia.org/wiki/Special:Search?search=%22<?php echo rawurlencode($album->f_name); ?>%22&go=Go" target="_blank"><?php echo Ui::get_icon('wikipedia', T_('Search on Wikipedia ...')); ?></a>
-        <a href="http://www.last.fm/search?q=%22<?php echo rawurlencode($album->f_artist); ?>%22+%22<?php echo rawurlencode($album->f_name); ?>%22&type=album" target="_blank"><?php echo Ui::get_icon('lastfm', T_('Search on Last.fm ...')); ?></a>
+        <a href="http://www.last.fm/search?q=%22<?php echo rawurlencode($album->f_album_artist_name); ?>%22+%22<?php echo rawurlencode($album->f_name); ?>%22&type=album" target="_blank"><?php echo Ui::get_icon('lastfm', T_('Search on Last.fm ...')); ?></a>
     <?php if ($album->mbid) { ?>
         <a href="https://musicbrainz.org/release/<?php echo $album->mbid; ?>" target="_blank"><?php echo Ui::get_icon('musicbrainz', T_('Search on Musicbrainz ...')); ?></a>
     <?php } else { ?>
@@ -79,31 +81,24 @@ if ($directplay_limit > 0) {
     <?php } ?>
     </div>
     <?php
-        $name  = '[' . $album->f_artist . '] ' . scrub_out($album->full_name);
+        $name  = '[' . $album->f_album_artist_name . '] ' . scrub_out($album->f_name);
         $thumb = Ui::is_grid_view('album') ? 32 : 11;
         Art::display('album', $album->id, $name, $thumb); ?>
 </div>
 <?php if (User::is_registered()) { ?>
-    <?php if (AmpConfig::get('ratings')) {
-            $rating = new Rating($album->id, 'album'); ?>
-    <div style="display:table-cell;" id="rating_<?php echo $album->id; ?>_album">
-            <?php echo Rating::show($album->id, 'album');
-            $average = $rating->get_average_rating();
-            if ($average > 0) {
-                /* HINT: Average rating. e.g. (average 3.7) */
-                echo '(' . T_('average') . ' ' . $average . ')';
-            } ?>
-    </div></p>
-    <?php
-        } ?>
-    <?php if (AmpConfig::get('userflags')) { ?>
-    <div style="display:table-cell;" id="userflag_<?php echo $album->id; ?>_album">
-            <?php echo Userflag::show($album->id, 'album'); ?>
-    </div>
-    <?php
-        } ?>
-<?php
+    <?php if (AmpConfig::get('ratings')) { ?>
+        <span id="rating_<?php echo $album->id; ?>_album">
+            <?php echo Rating::show($album->id, 'album', true); ?>
+        </span>
+        <?php
     } ?>
+    <?php if (AmpConfig::get('userflags')) { ?>
+        <span id="userflag_<?php echo $album->id; ?>_album">
+            <?php echo Userflag::show($album->id, 'album'); ?>
+        </span>
+        <?php
+    } ?>
+    <?php } ?>
 <?php
 if (AmpConfig::get('show_played_times')) { ?>
 <br />
@@ -131,10 +126,17 @@ if (AmpConfig::get('sociable') && $owner_id > 0) {
     <ul>
         <?php if ($show_direct_play) {
         $play       = T_('Play');
+        $playnext   = T_('Play next');
         $playlast   = T_('Play last'); ?>
         <li>
             <?php echo Ajax::button_with_text('?page=stream&action=directplay&object_type=album&' . $album->get_http_album_query_ids('object_id'), 'play', $play, 'directplay_full_' . $album->id); ?>
         </li>
+            <?php if (Stream_Playlist::check_autoplay_next()) { ?>
+        <li>
+            <?php echo Ajax::button_with_text('?page=stream&action=directplay&object_type=album&' . $album->get_http_album_query_ids('object_id') . '&playnext=true', 'play_next', $playnext, 'nextplay_album_' . $album->id); ?>
+        </li>
+            <?php
+        } ?>
             <?php if (Stream_Playlist::check_autoplay_append()) { ?>
         <li>
             <?php echo Ajax::button_with_text('?page=stream&action=directplay&object_type=album&' . $album->get_http_album_query_ids('object_id') . '&append=true', 'play_add', $playlast, 'addplay_album_' . $album->id); ?>
@@ -274,6 +276,6 @@ if (AmpConfig::get('sociable') && $owner_id > 0) {
     $browse->set_filter('album', $album->id);
     $browse->set_sort('track', 'ASC');
     $browse->get_objects();
-    $browse->show_objects(null, true); // true argument is set to show the reorder column
+    $browse->show_objects(null, array('hide' => $hide_array));
     $browse->store(); ?>
 </div>

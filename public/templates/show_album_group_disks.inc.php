@@ -40,13 +40,19 @@ $web_path = AmpConfig::get('web_path');
 /** @var Album $album */
 $album->allow_group_disks = true;
 // Title for this album
-$title = scrub_out($album->full_name) . '&nbsp;(' . $album->year . ')';
+$title = scrub_out($album->f_name);
+if ($album->year > 0) {
+    $title .= '&nbsp;(' . $album->year . ')';
+}
 $title .= '&nbsp;-&nbsp;' . (($album->f_album_artist_link) ? $album->f_album_artist_link : $album->f_artist_link);
 
 $show_direct_play_cfg = AmpConfig::get('directplay');
 $show_playlist_add    = Access::check('interface', 25);
 $show_direct_play     = $show_direct_play_cfg;
 $directplay_limit     = AmpConfig::get('direct_play_limit');
+$hide_array           = (AmpConfig::get('hide_single_artist') && $album->artist_count == 1)
+    ? array('cel_artist', 'cel_album', 'cel_year', 'cel_drag')
+    : array('cel_album', 'cel_year', 'cel_drag');
 
 if ($directplay_limit > 0) {
     $show_playlist_add = ($album->song_count <= $directplay_limit);
@@ -62,10 +68,10 @@ $zipHandler = $dic->get(ZipHandlerInterface::class);
 <?php Ui::show_box_top($title, 'info-box'); ?>
 <div class="item_right_info">
     <div class="external_links">
-        <a href="http://www.google.com/search?q=%22<?php echo rawurlencode($album->f_artist); ?>%22+%22<?php echo rawurlencode($album->f_name); ?>%22" target="_blank"><?php echo Ui::get_icon('google', T_('Search on Google ...')); ?></a>
+        <a href="http://www.google.com/search?q=%22<?php echo rawurlencode($album->f_album_artist_name); ?>%22+%22<?php echo rawurlencode($album->f_name); ?>%22" target="_blank"><?php echo Ui::get_icon('google', T_('Search on Google ...')); ?></a>
         <a href="https://www.duckduckgo.com/s?q=%22<?php echo rawurlencode($album->f_name); ?>%22" target="_blank"><?php echo Ui::get_icon('duckduckgo', T_('Search on DuckDuckGo ...')); ?></a>
         <a href="http://en.wikipedia.org/wiki/Special:Search?search=%22<?php echo rawurlencode($album->f_name); ?>%22&go=Go" target="_blank"><?php echo Ui::get_icon('wikipedia', T_('Search on Wikipedia ...')); ?></a>
-        <a href="http://www.last.fm/search?q=%22<?php echo rawurlencode($album->f_artist); ?>%22+%22<?php echo rawurlencode($album->f_name); ?>%22&type=album" target="_blank"><?php echo Ui::get_icon('lastfm', T_('Search on Last.fm ...')); ?></a>
+        <a href="http://www.last.fm/search?q=%22<?php echo rawurlencode($album->f_album_artist_name); ?>%22+%22<?php echo rawurlencode($album->f_name); ?>%22&type=album" target="_blank"><?php echo Ui::get_icon('lastfm', T_('Search on Last.fm ...')); ?></a>
     <?php if ($album->mbid) { ?>
         <a href="https://musicbrainz.org/release/<?php echo $album->mbid; ?>" target="_blank"><?php echo Ui::get_icon('musicbrainz', T_('Search on Musicbrainz ...')); ?></a>
     <?php } else { ?>
@@ -74,26 +80,34 @@ $zipHandler = $dic->get(ZipHandlerInterface::class);
     </div>
     <?php
     if ($album->name != T_('Unknown (Orphaned)')) {
-        $name  = '[' . $album->f_artist . '] ' . scrub_out($album->full_name);
+        $name  = '[' . $album->f_album_artist_name . '] ' . scrub_out($album->f_name);
         $thumb = Ui::is_grid_view('album') ? 32 : 11;
         Art::display('album', $album->id, $name, $thumb);
     } ?>
 </div>
 <?php if (User::is_registered()) { ?>
     <?php if (AmpConfig::get('ratings')) { ?>
-    <div style="display:table-cell;" id="rating_<?php echo $album->id; ?>_album">
-            <?php echo Rating::show($album->id, 'album'); ?>
-    </div>
+    <span id="rating_<?php echo $album->id; ?>_album">
+        <?php echo Rating::show($album->id, 'album'); ?>
+    </span>
     <?php
         } ?>
     <?php if (AmpConfig::get('userflags')) { ?>
-    <div style="display:table-cell;" id="userflag_<?php echo $album->id; ?>_album">
-            <?php echo Userflag::show($album->id, 'album'); ?>
-    </div>
+    <span id="userflag_<?php echo $album->id; ?>_album">
+        <?php echo Userflag::show($album->id, 'album'); ?>
+    </span>
     <?php
         } ?>
 <?php
     } ?>
+<?php if (AmpConfig::get('show_played_times')) { ?>
+    <br />
+    <div style="display:inline;">
+        <?php echo T_('Played') . ' ' .
+            /* HINT: Number of times an object has been played */
+            sprintf(nT_('%d time', '%d times', $album->object_cnt), $album->object_cnt); ?>
+    </div>
+<?php } ?>
 <div id="information_actions">
     <h3><?php echo T_('Actions'); ?>:</h3>
     <ul>
@@ -101,6 +115,12 @@ $zipHandler = $dic->get(ZipHandlerInterface::class);
         <li>
             <?php echo Ajax::button_with_text('?page=stream&action=directplay&object_type=album&' . $album->get_http_album_query_ids('object_id'), 'play', T_('Play'), 'directplay_full_'); ?>
         </li>
+            <?php if (Stream_Playlist::check_autoplay_next()) { ?>
+        <li>
+            <?php echo Ajax::button_with_text('?page=stream&action=directplay&object_type=album&' . $album->get_http_album_query_ids('object_id') . '&playnext=true', 'play_next', T_('Play next'), 'nextplay_album_'); ?>
+        </li>
+            <?php
+        } ?>
             <?php if (Stream_Playlist::check_autoplay_append()) { ?>
         <li>
             <?php echo Ajax::button_with_text('?page=stream&action=directplay&object_type=album&' . $album->get_http_album_query_ids('object_id') . '&append=true', 'play_add', T_('Play last'), 'addplay_album_'); ?>
@@ -162,6 +182,9 @@ $zipHandler = $dic->get(ZipHandlerInterface::class);
         <?php
             if ($show_direct_play) {
                 echo Ajax::button('?page=stream&action=directplay&object_type=album&' . $c_album->get_http_album_query_id('object_id'), 'play', T_('Play'), 'directplay_full_' . $c_album->id);
+                if (Stream_Playlist::check_autoplay_next()) {
+                    echo Ajax::button('?page=stream&action=directplay&object_type=album&' . $c_album->get_http_album_query_id('object_id') . '&playnext=true', 'play_next', T_('Play next'), 'nextplay_album_' . $c_album->id);
+                }
                 if (Stream_Playlist::check_autoplay_append()) {
                     echo Ajax::button('?page=stream&action=directplay&object_type=album&' . $c_album->get_http_album_query_id('object_id') . '&append=true', 'play_add', T_('Play last'), 'addplay_album_' . $c_album->id);
                 }
@@ -208,7 +231,7 @@ $zipHandler = $dic->get(ZipHandlerInterface::class);
         $browse->set_filter('album', $album_id);
         $browse->set_sort('track', 'ASC');
         $browse->get_objects();
-        $browse->show_objects(null, true); // true argument is set to show the reorder column
+        $browse->show_objects(null, array('hide' => $hide_array));
         $browse->store(); ?>
     </div><br />
 <?php

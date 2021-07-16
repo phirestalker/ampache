@@ -391,7 +391,7 @@ class Xml_Data
      * we want
      *
      * @param  array   $objects Array of object_ids (Mixed string|int)
-     * @param  string  $type 'artist'|'album'|'song'|'playlist'|'share'|'podcast'|'podcast_episode'|'video'|'live_stream'
+     * @param  string  $object_type 'artist'|'album'|'song'|'playlist'|'share'|'podcast'|'podcast_episode'|'video'|'live_stream'
      * @param  integer $user_id
      * @param  boolean $full_xml whether to return a full XML document or just the node.
      * @param  boolean $include include episodes from podcasts or tracks in a playlist
@@ -413,14 +413,14 @@ class Xml_Data
                     } else {
                         $artist = new Artist($object_id);
                         $artist->format();
-                        $albums = static::getAlbumRepository()->getByArtist($artist, null, true);
+                        $albums = static::getAlbumRepository()->getByArtist($object_id, null, true);
                         $string .= "<$object_type id=\"" . $object_id . "\">\n" .
-                            "\t<name><![CDATA[" . $artist->f_full_name . "]]></name>\n";
+                            "\t<name><![CDATA[" . $artist->f_name . "]]></name>\n";
                         foreach ($albums as $album_id) {
                             if ($album_id > 0) {
                                 $album = new Album($album_id);
                                 $string .= "\t<album id=\"" . $album_id .
-                                    '"><![CDATA[' . $album->full_name .
+                                    '"><![CDATA[' . $album->f_name .
                                     "]]></album>\n";
                             }
                         }
@@ -434,8 +434,8 @@ class Xml_Data
                         $album = new Album($object_id);
                         $album->format();
                         $string .= "<$object_type id=\"" . $object_id . "\">\n" .
-                            "\t<name><![CDATA[" . $album->full_name . "]]></name>\n" .
-                            "\t\t<artist id=\"" . $album->album_artist . "\"><![CDATA[" . $album->album_artist_name . "]]></artist>\n" .
+                            "\t<name><![CDATA[" . $album->f_name . "]]></name>\n" .
+                            "\t\t<artist id=\"" . $album->album_artist . "\"><![CDATA[" . $album->f_album_artist_name . "]]></artist>\n" .
                             "</$object_type>\n";
                     }
                     break;
@@ -655,14 +655,14 @@ class Xml_Data
 
             // Handle includes
             $albums = (in_array("albums", $include))
-                ? self::albums(static::getAlbumRepository()->getByArtist($artist), array(), $user_id, false)
+                ? self::albums(static::getAlbumRepository()->getByArtist($artist_id), array(), $user_id, false)
                 : '';
             $songs = (in_array("songs", $include))
-                ? self::songs(static::getSongRepository()->getByArtist($artist), $user_id, false)
+                ? self::songs(static::getSongRepository()->getByArtist($artist_id), $user_id, false)
                 : '';
 
             $string .= "<artist id=\"" . $artist->id . "\">\n" .
-                    "\t<name><![CDATA[" . $artist->f_full_name . "]]></name>\n" .
+                    "\t<name><![CDATA[" . $artist->f_name . "]]></name>\n" .
                     $tag_string .
                     "\t<albums>" . $albums . "</albums>\n" .
                     "\t<albumcount>" . ($artist->albums ?: 0) . "</albumcount>\n" .
@@ -705,6 +705,8 @@ class Xml_Data
             $albums = array_splice($albums, self::$offset, self::$limit);
         }
         $string = ($full_xml) ? "<total_count>" . Catalog::get_count('album') . "</total_count>\n" : '';
+        // original year (fall back to regular year)
+        $original_year = AmpConfig::get('use_original_year');
 
         Rating::build_cache('album', $albums);
 
@@ -715,19 +717,22 @@ class Xml_Data
             $disk   = $album->disk;
             $rating = new Rating($album_id, 'album');
             $flag   = new Userflag($album_id, 'album');
+            $year   = ($original_year && $album->original_year)
+                ? $album->original_year
+                : $album->year;
 
             // Build the Art URL, include session
             $art_url = AmpConfig::get('web_path') . '/image.php?object_id=' . $album->id . '&object_type=album&auth=' . scrub_out(Core::get_request('auth'));
 
-            $string .= "<album id=\"" . $album->id . "\">\n" . "\t<name><![CDATA[" . $album->full_name . "]]></name>\n";
+            $string .= "<album id=\"" . $album->id . "\">\n" . "\t<name><![CDATA[" . $album->f_name . "]]></name>\n";
 
             // Do a little check for artist stuff
-            if ($album->album_artist_name != "") {
-                $string .= "\t<artist id=\"$album->artist_id\"><![CDATA[$album->album_artist_name]]></artist>\n";
+            if ($album->f_album_artist_name != "") {
+                $string .= "\t<artist id=\"$album->album_artist\"><![CDATA[$album->f_album_artist_name]]></artist>\n";
             } elseif ($album->artist_count != 1) {
                 $string .= "\t<artist id=\"0\"><![CDATA[Various]]></artist>\n";
             } else {
-                $string .= "\t<artist id=\"$album->artist_id\"><![CDATA[$album->artist_name]]></artist>\n";
+                $string .= "\t<artist id=\"$album->album_artist\"><![CDATA[$album->f_artist_name]]></artist>\n";
             }
 
             // Handle includes
@@ -741,7 +746,7 @@ class Xml_Data
             }
 
             $string .= "\t<time>" . $album->total_duration . "</time>\n" .
-                    "\t<year>" . $album->year . "</year>\n" .
+                    "\t<year>" . $year . "</year>\n" .
                     "\t<tracks>" . $songs . "</tracks>\n" .
                     "\t<songcount>" . $album->song_count . "</songcount>\n" .
                     "\t<diskcount>" . $disk . "</diskcount>\n" .

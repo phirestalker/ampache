@@ -39,36 +39,30 @@ use Ampache\Module\Util\Ui;
 
 <?php if (User::is_registered()) { ?>
     <?php if (AmpConfig::get('ratings')) { ?>
-        <?php $rowparity = Ui::flip_class(); ?>
-        <dt class="<?php echo $rowparity; ?>"><?php echo T_('Rating'); ?></dt>
-        <dd class="<?php echo $rowparity; ?>">
-            <div id="rating_<?php echo $episode->id; ?>_podcast_episode"><?php echo Rating::show($episode->id,
-                    'podcast_episode'); ?>
+        <dt><?php echo T_('Rating'); ?></dt>
+        <dd>
+            <div id="rating_<?php echo $episode->id; ?>_podcast_episode">
+                <?php echo Rating::show($episode->id, 'podcast_episode'); ?>
             </div>
         </dd>
-    <?php
-    } ?>
+    <?php } ?>
 
     <?php if (AmpConfig::get('userflags')) { ?>
-        <?php $rowparity = Ui::flip_class(); ?>
-        <dt class="<?php echo $rowparity; ?>"><?php echo T_('Fav.'); ?></dt>
-        <dd class="<?php echo $rowparity; ?>">
-            <div id="userflag_<?php echo $episode->id; ?>_podcast_episode"><?php echo Userflag::show($episode->id,
-                    'podcast_episode'); ?>
+        <dt><?php echo T_('Fav.'); ?></dt>
+        <dd>
+            <div id="userflag_<?php echo $episode->id; ?>_podcast_episode">
+                <?php echo Userflag::show($episode->id, 'podcast_episode'); ?>
             </div>
         </dd>
-    <?php
-    } ?>
-<?php
-} ?>
-<?php $rowparity = Ui::flip_class(); ?>
-<dt class="<?php echo $rowparity; ?>"><?php echo T_('Action'); ?></dt>
-    <dd class="<?php echo $rowparity; ?>">
+    <?php } ?>
+<?php } ?>
+<dt><?php echo T_('Action'); ?></dt>
+    <dd>
         <?php if (!empty($episode->file)) { ?>
         <?php if (AmpConfig::get('directplay')) { ?>
             <?php echo Ajax::button('?page=stream&action=directplay&object_type=podcast_episode&object_id=' . $episode->id, 'play', T_('Play'), 'play_podcast_episode_' . $episode->id); ?>
             <?php if (Stream_Playlist::check_autoplay_next()) { ?>
-                <?php echo Ajax::button('?page=stream&action=directplay&object_type=podcast_episode&object_id=' . $episode->id . '&playnext=true', 'play_next', T_('Play next'), 'nextplay_podcast_episode_' . $episode->id); ?>
+                <?php echo Ajax::button('?page=stream&action=directplay&object_type=podcast_episode&object_id=' . $episode->id . '&playnext=true', 'play_next', T_('Play next'), 'addnext_podcast_episode_' . $episode->id); ?>
             <?php
             } ?>
             <?php if (Stream_Playlist::check_autoplay_append()) { ?>
@@ -137,8 +131,7 @@ use Ampache\Module\Util\Ui;
 
     foreach ($songprops as $key => $value) {
         if (trim($value)) {
-            $rowparity = Ui::flip_class();
-            echo "<dt class=\"" . $rowparity . "\">" . T_($key) . "</dt><dd class=\"" . $rowparity . "\">" . $value . "</dd>";
+            echo "<dt>" . T_($key) . "</dt><dd>" . $value . "</dd>";
         }
     } ?>
 </dl>

@@ -39,15 +39,11 @@ use Ampache\Repository\AlbumRepositoryInterface;
 
 final class SearchAjaxHandler implements AjaxHandlerInterface
 {
-    private AlbumRepositoryInterface $albumRepository;
-
     private MissingArtistFinderInterface $missingArtistFinder;
 
     public function __construct(
-        AlbumRepositoryInterface $albumRepository,
         MissingArtistFinderInterface $missingArtistFinder
     ) {
-        $this->albumRepository     = $albumRepository;
         $this->missingArtistFinder = $missingArtistFinder;
     }
 
@@ -83,8 +79,8 @@ final class SearchAjaxHandler implements AjaxHandlerInterface
                         $results[] = array(
                             'type' => T_('Artists'),
                             'link' => $artist->link,
-                            'label' => $artist->name,
-                            'value' => $artist->name,
+                            'label' => $artist->f_name,
+                            'value' => $artist->f_name,
                             'rels' => '',
                             'image' => Art::url($artist->id, 'artist', null, 10),
                         );
@@ -109,16 +105,13 @@ final class SearchAjaxHandler implements AjaxHandlerInterface
                     foreach ($sres as $albumid) {
                         $album = new Album($albumid);
                         $album->format(true);
-                        $a_title = $album->f_title;
-                        if ($album->disk && !$album->allow_group_disks && count($this->albumRepository->getAlbumSuite($album)) > 1) {
-                            $a_title .= " [" . T_('Disk') . " " . $album->disk . "]";
-                        }
+                        $a_title   = $album->f_title;
                         $results[] = array(
                             'type' => T_('Albums'),
                             'link' => $album->link,
                             'label' => $a_title,
                             'value' => $album->f_title,
-                            'rels' => $album->f_artist,
+                            'rels' => $album->f_album_artist_name,
                             'image' => Art::url($album->id, 'album', null, 10),
                         );
                     }

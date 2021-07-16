@@ -33,7 +33,7 @@ use Ampache\Module\Util\EnvironmentInterface;
 final class InitializationHandlerConfig implements InitializationHandlerInterface
 {
     private const VERSION        = 'develop';
-    private const CONFIG_VERSION = '50';
+    private const CONFIG_VERSION = '52';
 
     public const CONFIG_FILE_PATH = __DIR__ . '/../../../config/ampache.cfg.php';
 
@@ -83,13 +83,13 @@ final class InitializationHandlerConfig implements InitializationHandlerInterfac
                     $results['raw_web_path']
                 );
             }
-            $results['http_port'] = !empty($results['http_port']) ?
-                $results['http_port'] :
-                $this->environment->getHttpPort();
+            $results['http_port'] = (!empty($results['http_port']))
+                ? $results['http_port']
+                : $this->environment->getHttpPort();
 
-            $port = $results['http_port'] != 80 && $results['http_port'] != 443 ?
-                ':' . $results['http_port'] :
-                '';
+            $port = ($results['http_port'] != 80 && $results['http_port'] != 443)
+                ? ':' . $results['http_port']
+                : '';
 
             $results['web_path'] = sprintf(
                 '%s://%s%s%s',
@@ -111,7 +111,7 @@ final class InitializationHandlerConfig implements InitializationHandlerInterfac
 
             // Variables needed for Auth class
             $results['cookie_path']   = $results['raw_web_path'];
-            $results['cookie_domain'] = $results['http_port'];
+            $results['cookie_domain'] = $results['http_host'];
             $results['cookie_life']   = $results['session_cookielife'];
             $results['cookie_secure'] = $results['session_cookiesecure'];
         }

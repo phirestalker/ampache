@@ -52,15 +52,15 @@ ob_end_clean();
 Ui::show_box_top('<div id="playlist_row_' . $playlist->id . '">' . $title . '</div>', 'info-box'); ?>
 <?php if (User::is_registered()) { ?>
     <?php if (AmpConfig::get('ratings')) { ?>
-    <div style="display:table-cell;" id="rating_<?php echo $playlist->id; ?>_playlist">
-            <?php echo Rating::show($playlist->id, 'playlist'); ?>
-    </div>
+    <span id="rating_<?php echo $playlist->id; ?>_playlist">
+        <?php echo Rating::show($playlist->id, 'playlist'); ?>
+    </span>
     <?php
     } ?>
     <?php if (AmpConfig::get('userflags')) { ?>
-    <div style="display:table-cell;" id="userflag_<?php echo $playlist->id; ?>_playlist">
-            <?php echo Userflag::show($playlist->id, 'playlist'); ?>
-    </div>
+    <span id="userflag_<?php echo $playlist->id; ?>_playlist">
+        <?php echo Userflag::show($playlist->id, 'playlist'); ?>
+    </span>
     <?php
     } ?>
 <?php
@@ -102,11 +102,24 @@ Ui::show_box_top('<div id="playlist_row_' . $playlist->id . '">' . $title . '</d
         </li>
     <?php
     } ?>
+    <?php if (AmpConfig::get('share')) { ?>
+        <a onclick="showShareDialog(event, 'playlist', '<?php echo $playlist->id; ?>');">
+                <?php echo UI::get_icon('share', T_('Share playlist')); ?>
+        &nbsp;&nbsp;<?php echo T_('Share playlist'); ?>
+        </a>
+    <?php
+    } ?>
     <?php if (AmpConfig::get('directplay')) { ?>
         <li>
             <?php echo Ajax::button_with_text('?page=stream&action=directplay&object_type=playlist&object_id=' . $playlist->id, 'play', T_('Play All'), 'directplay_full_' . $playlist->id); ?>
         </li>
     <?php
+    } ?>
+    <?php if (Stream_Playlist::check_autoplay_next()) { ?>
+        <li>
+            <?php echo Ajax::button_with_text('?page=stream&action=directplay&object_type=playlist&object_id=' . $playlist->id . '&playnext=true', 'play_next', T_('Play All Next'), 'nextplay_playlist_' . $playlist->id); ?>
+        </li>
+        <?php
     } ?>
     <?php if (Stream_Playlist::check_autoplay_append()) { ?>
         <li>

@@ -135,7 +135,7 @@ class easy_captcha_utility
 /* easy_captcha utility code */
 
 // global vars
-captcha_url_rx = /(https?:\/\/\w[^\/,\]\[=#]+)/ig;  //
+captcha_url_rx = /(https?:\/\/\w[^\/,\]\[=#]+)/ig;
 captcha_form_urls = new Array();
 captcha_sol_cb = "";
 captcha_rpc = 0;
@@ -272,6 +272,7 @@ END_____JSRPC__JSRPC__JSRPC__JSRPC__JSRPC__JSRPC_____END;
                         array_pop($path);
                         break;
                     }
+                    // Intentional break fall-through
                 default:
                     $path[] = $comp;
                     $ncomp++;
